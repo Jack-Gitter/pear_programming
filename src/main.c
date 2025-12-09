@@ -57,6 +57,7 @@ char *parse_file_path(int argc, char *argv[]) {
 
   return argv[1];
 }
+
 int main(int argc, char *argv[]) {
 
   int ret = 0;
