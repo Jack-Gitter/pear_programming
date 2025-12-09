@@ -1,4 +1,6 @@
+#include "msgpack/sbuffer.h"
 #include <errno.h>
+#include <msgpack.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,6 +44,7 @@ int cleanup_socket(int socket) {
 
 int send_message(int socket, char *message) {
 
+  // use message pack here to pack message, and send over the socket
   size_t len = strlen(message);
   size_t bytes = 0;
 
