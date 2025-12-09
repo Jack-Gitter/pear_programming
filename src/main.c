@@ -22,6 +22,13 @@ int init_socket(char *filename) {
   strncpy(socket_address.sun_path, filename, sizeof(socket_address.sun_path));
   socket_address.sun_path[sizeof(socket_address.sun_path) - 1] = '\0';
 
+  size_t size = SUN_LEN(&socket_address);
+  if (connect(sock, (struct sockaddr *)&socket_address, size) < 0) {
+    fprintf(stderr, "failed to connect to the address\n");
+    close(sock);
+    return -1;
+  }
+
   return sock;
 }
 
@@ -37,9 +44,11 @@ int send_message(int socket, char *message) {
 
   size_t len = strlen(message);
   size_t bytes = 0;
+
   while (bytes != len) {
     int ret = send(socket, message, strlen(message), 0);
     if (ret < 0) {
+      printf("ret is %d\n", ret);
       fprintf(stderr, "failed to send message on socket\n");
       return ret;
     }
@@ -77,6 +86,7 @@ int main(int argc, char *argv[]) {
   ret = send_message(socket, "hello world");
 
   if (ret < 0) {
+    cleanup_socket(socket);
     exit(EXIT_FAILURE);
   }
 
