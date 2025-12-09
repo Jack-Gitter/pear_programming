@@ -28,15 +28,17 @@ int main(int argc, char *argv[]) {
   strncpy(socket_address.sun_path, filename, sizeof(socket_address.sun_path));
   socket_address.sun_path[sizeof(socket_address.sun_path) - 1] = '\0';
 
-  size_t size = SUN_LEN(&socket_address);
+  // size_t size = SUN_LEN(&socket_address);
 
-  if (bind(sock, (struct sockaddr *)&socket_address, size) < 0) {
-    perror("bind");
-    exit(EXIT_FAILURE);
-  }
+  char *content = "hello world";
+  send(sock, content, strlen(content), 0);
+  /*  if (bind(sock, (struct sockaddr *)&socket_address, size) < 0) {
+      perror("bind");
+      exit(EXIT_FAILURE);
+    }
 
-  close(sock);
-  unlink(filename);
+    close(sock);
+    unlink(filename);*/
 
   return sock;
 }
