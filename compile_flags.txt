@@ -3,6 +3,6 @@
 -I/usr/local/include 
 -I./src/constants/
 -I./src/msgpack-client/
--I./src/socket/
--I./src/utils/
+-I./src/server/socket/
+-I./src/server/utils/
 
