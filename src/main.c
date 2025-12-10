@@ -75,8 +75,6 @@ msgpack_object *read_response(int socket) {
           msgpack_object *obj = malloc(sizeof(msgpack_object));
           *obj = und.data;
           msgpack_unpacked_destroy(&und);
-          printf("was able to unpack data!\n");
-          printf("%llu\n", obj->via.array.ptr[0].via.i64);
           return obj;
         }
         case MSGPACK_UNPACK_CONTINUE:
@@ -171,7 +169,14 @@ int exchange_with_nvim_set_cursor(int socket, int window_id, int x, int y) {
     fprintf(stderr, "failed to read response\n");
     return -1;
   }
-  printf("got %llu\n", obj->via.array.ptr[0].via.i64);
+
+  msgpack_object_type type = obj->via.array.ptr[2].type;
+  if (type != MSGPACK_OBJECT_NIL) {
+    fprintf(stderr, "Error returned from server for RPC call\n");
+    free(obj);
+    return -1;
+  }
+
   free(obj);
   return 0;
 }
