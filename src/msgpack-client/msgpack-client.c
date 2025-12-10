@@ -1,3 +1,4 @@
+#include "msgpack-client.h"
 #include "constants.h"
 #include "msgpack/object.h"
 #include "msgpack/pack.h"
@@ -60,6 +61,75 @@ msgpack_object *read_response(int socket) {
     }
   }
   return NULL;
+}
+
+int real(int socket, char *method_name, method_param_t *params,
+         int params_len) {
+  msgpack_sbuffer sbuf;
+  msgpack_packer pk;
+  msgpack_sbuffer_init(&sbuf);
+  msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+  // Pack [type, msgid, method, params]
+  msgpack_pack_array(&pk, 4);
+
+  // Pack type = 0 = request
+  msgpack_pack_int(&pk, 0);
+  // Pack msgid
+  msgpack_pack_int(&pk, msgid++);
+
+  // Pack method = method*
+  int method_len = strlen(method_name);
+  msgpack_pack_str(&pk, method_len);
+  msgpack_pack_str_body(&pk, method_name, method_len);
+
+  msgpack_pack_array(&pk, params_len);
+
+  for (int i = 0; i < params_len; i++) {
+    msgpack_object_type type = params[i].type;
+    switch (type) {
+    case MSGPACK_OBJECT_NIL:
+      msgpack_pack_nil(&pk);
+      break;
+    case MSGPACK_OBJECT_BOOLEAN:
+      if (params[i].value.b) {
+        msgpack_pack_true(&pk);
+      } else {
+        msgpack_pack_false(&pk);
+      }
+      break;
+    case MSGPACK_OBJECT_POSITIVE_INTEGER:
+    case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+      msgpack_pack_int(&pk, params[i].value.i);
+      break;
+    case MSGPACK_OBJECT_FLOAT:
+    case MSGPACK_OBJECT_FLOAT32:
+      msgpack_pack_float(&pk, params[i].value.f);
+      break;
+    case MSGPACK_OBJECT_STR: {
+      char *str = params[i].value.str;
+      int str_len = strlen(str);
+      msgpack_pack_str(&pk, str_len);
+      msgpack_pack_str_body(&pk, str, str_len);
+      break;
+    }
+    default:
+      break;
+    }
+  }
+
+  size_t bytes = 0;
+
+  while (bytes != sbuf.size) {
+    int ret = send(socket, sbuf.data + bytes, sbuf.size - bytes, 0);
+    if (ret < 0) {
+      printf("ret is %d\n", ret);
+      fprintf(stderr, "failed to send message on socket\n");
+      return ret;
+    }
+    bytes += ret;
+  }
+  return 0;
 }
 
 int set_cursor(int socket, int window_id, int x, int y) {
