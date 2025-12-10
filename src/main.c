@@ -52,48 +52,43 @@ int read_response(int socket) {
   // recv 100 bytes each time, as a base amount
   bool result = msgpack_unpacker_init(&unp, DEFAULT_MES_LEN);
   if (result) {
-    // msgpack_unpack_return ret = MSGPACK_UNPACK_CONTINUE;
-    // while (ret == MSGPACK_UNPACK_CONTINUE) {
-    if (msgpack_unpacker_buffer_capacity(&unp) < DEFAULT_MES_LEN) {
-      bool result = msgpack_unpacker_reserve_buffer(&unp, DEFAULT_MES_LEN);
-      if (!result) {
-        /* Memory allocation error. */
-      }
-      int bytes_read =
-          recv(socket, msgpack_unpacker_buffer(&unp), DEFAULT_MES_LEN, 0);
-      msgpack_unpacker_buffer_consumed(&unp, bytes_read);
-      if (bytes_read == 0) {
-        // client closed connection
-      }
-      msgpack_unpacked und;
-      msgpack_unpack_return ret;
-      msgpack_unpacked_init(&und);
-      ret = msgpack_unpacker_next(&unp, &und);
-      switch (ret) {
-      case MSGPACK_UNPACK_SUCCESS: {
-        // msgpack_object obj = und.data;
-        printf("was able to unpack data!\n");
-        printf("%llu\n", und.data.via.array.ptr[0].via.i64);
-        msgpack_unpacked_destroy(&und);
-      } break;
-      case MSGPACK_UNPACK_CONTINUE:
-        printf("need more data\n");
-        /* cheking capacity, reserve buffer, copy additional data to the
-         * buffer,
-         */
-        /* notify consumed buffer size, then call msgpack_unpacker_next(&unp,
-         * &und) again */
-        break;
-      case MSGPACK_UNPACK_PARSE_ERROR:
-        printf("parsing error\n");
-        /* Error process */
-        break;
-      default:
-        printf("unexpected error occured\n");
-        break;
+    msgpack_unpack_return ret = MSGPACK_UNPACK_CONTINUE;
+    while (ret == MSGPACK_UNPACK_CONTINUE) {
+      if (msgpack_unpacker_buffer_capacity(&unp) < DEFAULT_MES_LEN) {
+        bool result = msgpack_unpacker_reserve_buffer(&unp, DEFAULT_MES_LEN);
+        if (!result) {
+          /* Memory allocation error. */
+        }
+        int bytes_read =
+            recv(socket, msgpack_unpacker_buffer(&unp), DEFAULT_MES_LEN, 0);
+        msgpack_unpacker_buffer_consumed(&unp, bytes_read);
+        if (bytes_read == 0) {
+          // client closed connection
+        }
+        msgpack_unpacked und;
+        msgpack_unpacked_init(&und);
+        ret = msgpack_unpacker_next(&unp, &und);
+        switch (ret) {
+        case MSGPACK_UNPACK_SUCCESS: {
+          // msgpack_object obj = und.data;
+          printf("was able to unpack data!\n");
+          printf("%llu\n", und.data.via.array.ptr[0].via.i64);
+          msgpack_unpacked_destroy(&und);
+        } break;
+        case MSGPACK_UNPACK_CONTINUE:
+          printf("need more data\n");
+          break;
+        case MSGPACK_UNPACK_PARSE_ERROR:
+          printf("parsing error\n");
+          return -1;
+          /* Error process */
+          break;
+        default:
+          printf("unexpected error occured\n");
+          break;
+        }
       }
     }
-    // }
   }
   msgpack_unpacker_destroy(&unp);
   return 0;
