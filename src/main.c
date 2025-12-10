@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  ret = exchange_with_nvim_set_cursor(socket, 0, 1, 1);
+  ret = exchange_with_nvim_set_cursor(socket, 0, 100, 100);
 
   if (ret < 0) {
     cleanup_socket(socket);
