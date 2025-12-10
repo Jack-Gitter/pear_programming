@@ -32,12 +32,25 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  // ret = exchange_with_nvim_set_cursor(socket, 1000, 1, 1);
+  method_param_arr_t *arr = malloc(sizeof(method_param_arr_t));
+  method_param_t x;
+  x.type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  x.value.i = 1;
+  method_param_t y;
+  y.type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  y.value.i = 1;
+  arr->items = malloc(sizeof(method_param_t) * 2);
+  arr->items[0] = x;
+  arr->items[1] = y;
+  arr->len = 2;
 
-  method_param_t *params = malloc(sizeof(method_param_t));
-  params[0].type = MSGPACK_OBJECT_STR;
-  params[0].value.str = "echo 'hello world'";
-  real(socket, "nvim_command", params, 1);
+  method_param_t *params = malloc(sizeof(method_param_t) * 2);
+  params[0].type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  params[0].value.i = 1000;
+  params[1].type = MSGPACK_OBJECT_ARRAY;
+  params[1].value.arr = arr;
+
+  real(socket, "nvim_win_set_cursor", params, 2);
 
   if (ret < 0) {
     exit(EXIT_FAILURE);

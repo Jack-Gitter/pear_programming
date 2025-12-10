@@ -2,16 +2,17 @@
 
 typedef struct method_param method_param_t;
 
+typedef struct method_param_arr {
+  method_param_t *items;
+  int len;
+} method_param_arr_t;
 union msg_pack_value {
   void *nil;
   bool b;
   int i;
   float f;
   char *str;
-  struct {
-    method_param_t *items;
-    int len;
-  } arr;
+  method_param_arr_t *arr;
 };
 
 struct method_param {

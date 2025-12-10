@@ -63,6 +63,55 @@ msgpack_object *read_response(int socket) {
   return NULL;
 }
 
+void pack_message(msgpack_packer *pk, method_param_t *params, int i, int len) {
+  if (i == len) {
+    printf("base case\n");
+    return;
+  }
+  msgpack_object_type type = params[i].type;
+  switch (type) {
+  case MSGPACK_OBJECT_NIL:
+    printf("packing nil\n");
+    msgpack_pack_nil(pk);
+    break;
+  case MSGPACK_OBJECT_BOOLEAN:
+    printf("packing bool: %d\n", params[i].value.b);
+    if (params[i].value.b) {
+      msgpack_pack_true(pk);
+    } else {
+      msgpack_pack_false(pk);
+    }
+    break;
+  case MSGPACK_OBJECT_POSITIVE_INTEGER:
+  case MSGPACK_OBJECT_NEGATIVE_INTEGER:
+    printf("packing int: %d\n", params[i].value.i);
+    msgpack_pack_int(pk, params[i].value.i);
+    break;
+  case MSGPACK_OBJECT_FLOAT:
+  case MSGPACK_OBJECT_FLOAT32:
+    printf("packing float %f\n", params[i].value.f);
+    msgpack_pack_float(pk, params[i].value.f);
+    break;
+  case MSGPACK_OBJECT_STR: {
+    printf("packing str: %s\n", params[i].value.str);
+    char *str = params[i].value.str;
+    int str_len = strlen(str);
+    msgpack_pack_str(pk, str_len);
+    msgpack_pack_str_body(pk, str, str_len);
+    break;
+  }
+  case MSGPACK_OBJECT_ARRAY: {
+    printf("packing arr\n");
+    msgpack_pack_array(pk, params[i].value.arr->len);
+    int arr_len = params[i].value.arr->len;
+    pack_message(pk, params[i].value.arr->items, 0, arr_len);
+    break;
+  }
+  default:
+    break;
+  }
+  pack_message(pk, params, ++i, len);
+}
 int real(int socket, char *method_name, method_param_t *params,
          int params_len) {
   msgpack_sbuffer sbuf;
@@ -85,38 +134,7 @@ int real(int socket, char *method_name, method_param_t *params,
 
   msgpack_pack_array(&pk, params_len);
 
-  for (int i = 0; i < params_len; i++) {
-    msgpack_object_type type = params[i].type;
-    switch (type) {
-    case MSGPACK_OBJECT_NIL:
-      msgpack_pack_nil(&pk);
-      break;
-    case MSGPACK_OBJECT_BOOLEAN:
-      if (params[i].value.b) {
-        msgpack_pack_true(&pk);
-      } else {
-        msgpack_pack_false(&pk);
-      }
-      break;
-    case MSGPACK_OBJECT_POSITIVE_INTEGER:
-    case MSGPACK_OBJECT_NEGATIVE_INTEGER:
-      msgpack_pack_int(&pk, params[i].value.i);
-      break;
-    case MSGPACK_OBJECT_FLOAT:
-    case MSGPACK_OBJECT_FLOAT32:
-      msgpack_pack_float(&pk, params[i].value.f);
-      break;
-    case MSGPACK_OBJECT_STR: {
-      char *str = params[i].value.str;
-      int str_len = strlen(str);
-      msgpack_pack_str(&pk, str_len);
-      msgpack_pack_str_body(&pk, str, str_len);
-      break;
-    }
-    default:
-      break;
-    }
-  }
+  pack_message(&pk, params, 0, params_len);
 
   size_t bytes = 0;
 
