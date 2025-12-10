@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  exchange_with_nvim_set_cursor(socket, 1000, 1, 1);
+  ret = exchange_with_nvim_set_cursor(socket, 1000, 1, 1);
 
   if (ret < 0) {
     exit(EXIT_FAILURE);
