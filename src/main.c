@@ -50,6 +50,7 @@ int cleanup_socket(int socket) {
 }
 
 int send_message(int socket, char *message) {
+
   msgpack_sbuffer sbuf;
   msgpack_packer pk;
   msgpack_sbuffer_init(&sbuf);
@@ -67,49 +68,18 @@ int send_message(int socket, char *message) {
   printf("About to send %zu bytes\n", sbuf.size);
 
   size_t bytes = 0;
-  while (bytes < sbuf.size) {
-    ssize_t ret = send(socket, sbuf.data + bytes, sbuf.size - bytes, 0);
+
+  while (bytes != sbuf.size) {
+    int ret = send(socket, sbuf.data + bytes, sbuf.size - bytes, 0);
     if (ret < 0) {
-      return -1;
+      printf("ret is %d\n", ret);
+      fprintf(stderr, "failed to send message on socket\n");
+      return ret;
     }
     bytes += ret;
-    printf("Sent %zd bytes (total: %zu/%zu)\n", ret, bytes, sbuf.size);
   }
-
-  msgpack_sbuffer_destroy(&sbuf);
   return 1;
 }
-// int send_message(int socket, char *message) {
-//
-//   msgpack_sbuffer sbuf;
-//   msgpack_packer pk;
-//   msgpack_sbuffer_init(&sbuf);
-//   msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
-//
-//   // Pack: [0, 1, "nvim_command", ["echo \"hello world!\""]]
-//
-//   msgpack_pack_array(&pk, 4);
-//   msgpack_pack_int(&pk, 0);
-//   msgpack_pack_int(&pk, 1);
-//   msgpack_pack_str(&pk, 12);
-//   msgpack_pack_str_body(&pk, "nvim_command", 12);
-//   msgpack_pack_array(&pk, 1);
-//   msgpack_pack_str(&pk, 18);
-//   msgpack_pack_str_body(&pk, "echo \"hello world!\"", 18);
-//
-//   size_t bytes = 0;
-//
-//   while (bytes != sbuf.size) {
-//     int ret = send(socket, sbuf.data + bytes, sbuf.size - bytes, 0);
-//     if (ret < 0) {
-//       printf("ret is %d\n", ret);
-//       fprintf(stderr, "failed to send message on socket\n");
-//       return ret;
-//     }
-//     bytes += ret;
-//   }
-//   return 1;
-// }
 
 char *parse_file_path(int argc, char *argv[]) {
 
