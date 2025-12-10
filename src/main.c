@@ -123,8 +123,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  char *mes = ":nvim_command echo 'hello world'";
-  ret = set_cursor(socket, 1000, 10, 10);
+  ret = set_cursor(socket, 1000, 1, 1);
 
   if (ret < 0) {
     cleanup_socket(socket);
