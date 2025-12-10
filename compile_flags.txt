@@ -1,4 +1,7 @@
 -Wall
 -Wextra
 -I/usr/local/include 
+-I./src/constants/
+-I./src/msgpack-client/
 -L/usr/local/lib
+
