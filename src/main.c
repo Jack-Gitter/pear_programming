@@ -47,9 +47,7 @@ int init_socket(char *filename) {
 
   return sock;
 }
-// [type, msgid, error, result]
-// understand a bit more about the memory lifetime
-// make this return a msgpack_object object, or a pointer to one probably!
+
 msgpack_object *read_response(int socket) {
   msgpack_unpacker unp;
   bool result = msgpack_unpacker_init(&unp, DEFAULT_MES_LEN);
