@@ -47,6 +47,8 @@ int init_socket(char *filename) {
   return sock;
 }
 // [type, msgid, error, result]
+// understand a bit more about the memory lifetime
+// make this return a msgpack_object object, or a pointer to one probably!
 int read_response(int socket) {
   msgpack_unpacker unp;
   // recv 100 bytes each time, as a base amount
@@ -80,7 +82,6 @@ int read_response(int socket) {
           break;
         case MSGPACK_UNPACK_PARSE_ERROR:
           printf("parsing error\n");
-          return -1;
           /* Error process */
           break;
         default:
