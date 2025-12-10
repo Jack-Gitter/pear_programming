@@ -71,14 +71,15 @@ int set_cursor(int socket, int window_id, int x, int y) {
   msgpack_pack_str(&pk, len);
   msgpack_pack_str_body(&pk, method, len);
 
+  // Pack space for the params array
+  msgpack_pack_array(&pk, 2);
+
   // Pack window ID
   msgpack_pack_int(&pk, window_id);
 
   // Pack space for [x,y] position tuple
   msgpack_pack_array(&pk, 2);
-  // Pack x
   msgpack_pack_int(&pk, x);
-  // Pack y
   msgpack_pack_int(&pk, y);
 
   size_t bytes = 0;
