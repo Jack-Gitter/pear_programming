@@ -9,6 +9,13 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+typedef struct message {
+  int type;
+  int msgid;
+  char *method;
+  void *params;
+} message_t;
+
 int init_socket(char *filename) {
 
   int sock = socket(PF_LOCAL, SOCK_STREAM, 0);
@@ -44,12 +51,26 @@ int cleanup_socket(int socket) {
 
 int send_message(int socket, char *message) {
 
-  // use message pack here to pack message, and send over the socket
-  size_t len = strlen(message);
+  msgpack_sbuffer sbuf;
+  msgpack_packer pk;
+  msgpack_sbuffer_init(&sbuf);
+  msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+  // Pack: [0, 1, "nvim_command", ["echo \"hello world!\""]]
+
+  msgpack_pack_array(&pk, 4);
+  msgpack_pack_int(&pk, 0);
+  msgpack_pack_int(&pk, 1);
+  msgpack_pack_str(&pk, 12);
+  msgpack_pack_str_body(&pk, "nvim_command", 12);
+  msgpack_pack_array(&pk, 1);
+  msgpack_pack_str(&pk, 18);
+  msgpack_pack_str_body(&pk, "echo \"hello world!\"", 18);
+
   size_t bytes = 0;
 
-  while (bytes != len) {
-    int ret = send(socket, message, strlen(message), 0);
+  while (bytes != sbuf.size) {
+    int ret = send(socket, sbuf.data + bytes, sbuf.size - bytes, 0);
     if (ret < 0) {
       printf("ret is %d\n", ret);
       fprintf(stderr, "failed to send message on socket\n");
@@ -86,7 +107,8 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  ret = send_message(socket, "hello world");
+  char *mes = ":nvim_command echo 'hello world'";
+  ret = send_message(socket, mes);
 
   if (ret < 0) {
     cleanup_socket(socket);
