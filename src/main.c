@@ -49,9 +49,8 @@ int init_socket(char *filename) {
 // [type, msgid, error, result]
 // understand a bit more about the memory lifetime
 // make this return a msgpack_object object, or a pointer to one probably!
-int read_response(int socket) {
+msgpack_object *read_response(int socket) {
   msgpack_unpacker unp;
-  // recv 100 bytes each time, as a base amount
   bool result = msgpack_unpacker_init(&unp, DEFAULT_MES_LEN);
   if (result) {
     msgpack_unpack_return ret = MSGPACK_UNPACK_CONTINUE;
@@ -59,12 +58,14 @@ int read_response(int socket) {
       if (msgpack_unpacker_buffer_capacity(&unp) < DEFAULT_MES_LEN) {
         bool result = msgpack_unpacker_reserve_buffer(&unp, DEFAULT_MES_LEN);
         if (!result) {
+          return NULL;
           /* Memory allocation error. */
         }
         int bytes_read =
             recv(socket, msgpack_unpacker_buffer(&unp), DEFAULT_MES_LEN, 0);
         msgpack_unpacker_buffer_consumed(&unp, bytes_read);
         if (bytes_read == 0) {
+          return NULL;
           // client closed connection
         }
         msgpack_unpacked und;
@@ -77,25 +78,24 @@ int read_response(int socket) {
           msgpack_unpacked_destroy(&und);
           printf("was able to unpack data!\n");
           printf("%llu\n", obj->via.array.ptr[0].via.i64);
-        } break;
+          return obj;
+        }
         case MSGPACK_UNPACK_CONTINUE:
           printf("need more data\n");
           break;
         case MSGPACK_UNPACK_PARSE_ERROR:
           printf("parsing error\n");
           msgpack_unpacked_destroy(&und);
-          /* Error process */
-          break;
+          return NULL;
         default:
           printf("unexpected error occured\n");
           msgpack_unpacked_destroy(&und);
-          break;
+          return NULL;
         }
       }
     }
   }
-  msgpack_unpacker_destroy(&unp);
-  return 0;
+  return NULL;
 }
 
 int cleanup_socket(int socket) {
