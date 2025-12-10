@@ -5,5 +5,4 @@
 -I./src/msgpack-client/
 -I./src/socket/
 -I./src/utils/
--L/usr/local/lib
 
