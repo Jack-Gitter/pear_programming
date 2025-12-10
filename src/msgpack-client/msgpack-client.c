@@ -65,7 +65,6 @@ msgpack_object *read_response(int socket) {
 
 void pack_params(msgpack_packer *pk, method_param_t *params, int i, int len) {
   if (i == len) {
-    printf("base case\n");
     return;
   }
   msgpack_object_type type = params[i].type;
