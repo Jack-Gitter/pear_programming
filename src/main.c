@@ -72,20 +72,23 @@ int read_response(int socket) {
         ret = msgpack_unpacker_next(&unp, &und);
         switch (ret) {
         case MSGPACK_UNPACK_SUCCESS: {
-          // msgpack_object obj = und.data;
-          printf("was able to unpack data!\n");
-          printf("%llu\n", und.data.via.array.ptr[0].via.i64);
+          msgpack_object *obj = malloc(sizeof(msgpack_object));
+          *obj = und.data;
           msgpack_unpacked_destroy(&und);
+          printf("was able to unpack data!\n");
+          printf("%llu\n", obj->via.array.ptr[0].via.i64);
         } break;
         case MSGPACK_UNPACK_CONTINUE:
           printf("need more data\n");
           break;
         case MSGPACK_UNPACK_PARSE_ERROR:
           printf("parsing error\n");
+          msgpack_unpacked_destroy(&und);
           /* Error process */
           break;
         default:
           printf("unexpected error occured\n");
+          msgpack_unpacked_destroy(&und);
           break;
         }
       }
