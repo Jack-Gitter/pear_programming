@@ -44,7 +44,7 @@ int init_socket(char *filename) {
 
   return sock;
 }
-
+// [type, msgid, error, result]
 int read_response(int socket) {
   msgpack_unpacker unp;
   // recv 100 bytes each time, as a base amount
@@ -70,7 +70,7 @@ int read_response(int socket) {
       case MSGPACK_UNPACK_SUCCESS: {
         // msgpack_object obj = und.data;
         printf("was able to unpack data!\n");
-        printf("%s\n", und.data.via.str.ptr);
+        printf("%llu\n", und.data.via.array.ptr[0].via.i64);
         msgpack_unpacked_destroy(&und);
       } break;
       case MSGPACK_UNPACK_CONTINUE:
@@ -84,6 +84,9 @@ int read_response(int socket) {
       case MSGPACK_UNPACK_PARSE_ERROR:
         printf("parsing error\n");
         /* Error process */
+        break;
+      default:
+        printf("unexpected error occured\n");
         break;
       }
     }
