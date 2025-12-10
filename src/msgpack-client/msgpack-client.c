@@ -63,7 +63,7 @@ msgpack_object *read_response(int socket) {
   return NULL;
 }
 
-void pack_message(msgpack_packer *pk, method_param_t *params, int i, int len) {
+void pack_params(msgpack_packer *pk, method_param_t *params, int i, int len) {
   if (i == len) {
     printf("base case\n");
     return;
@@ -102,18 +102,19 @@ void pack_message(msgpack_packer *pk, method_param_t *params, int i, int len) {
   }
   case MSGPACK_OBJECT_ARRAY: {
     printf("packing arr\n");
-    msgpack_pack_array(pk, params[i].value.arr->len);
-    int arr_len = params[i].value.arr->len;
-    pack_message(pk, params[i].value.arr->items, 0, arr_len);
+    msgpack_pack_array(pk, params[i].value.arr.len);
+    int arr_len = params[i].value.arr.len;
+    pack_params(pk, params[i].value.arr.items, 0, arr_len);
     break;
   }
   default:
     break;
   }
-  pack_message(pk, params, ++i, len);
+  pack_params(pk, params, ++i, len);
 }
-int real(int socket, char *method_name, method_param_t *params,
-         int params_len) {
+
+int send_message(int socket, char *method_name, method_param_t *params,
+                 int params_len) {
   msgpack_sbuffer sbuf;
   msgpack_packer pk;
   msgpack_sbuffer_init(&sbuf);
@@ -134,7 +135,7 @@ int real(int socket, char *method_name, method_param_t *params,
 
   msgpack_pack_array(&pk, params_len);
 
-  pack_message(&pk, params, 0, params_len);
+  pack_params(&pk, params, 0, params_len);
 
   size_t bytes = 0;
 
@@ -151,47 +152,40 @@ int real(int socket, char *method_name, method_param_t *params,
 }
 
 int set_cursor(int socket, int window_id, int x, int y) {
-  msgpack_sbuffer sbuf;
-  msgpack_packer pk;
-  msgpack_sbuffer_init(&sbuf);
-  msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+  method_param_t x_param;
+  x_param.type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  x_param.value.i = x;
+  method_param_t y_param;
+  y_param.type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  y_param.value.i = y;
+  method_param_arr_t arr;
 
-  // Pack [type, msgid, method, params]
-  msgpack_pack_array(&pk, 4);
+  arr.items = malloc(sizeof(method_param_t) * 2);
 
-  // Pack type = 0 = request
-  msgpack_pack_int(&pk, 0);
-  // Pack msgid
-  msgpack_pack_int(&pk, msgid++);
-
-  // Pack method = method*
-  char *method = "nvim_win_set_cursor";
-  int len = strlen(method);
-  msgpack_pack_str(&pk, len);
-  msgpack_pack_str_body(&pk, method, len);
-
-  // Pack params array
-  msgpack_pack_array(&pk, 2);
-
-  // Pack window ID
-  msgpack_pack_int(&pk, window_id);
-
-  // Pack [x,y] position tuple
-  msgpack_pack_array(&pk, 2);
-  msgpack_pack_int(&pk, x);
-  msgpack_pack_int(&pk, y);
-
-  size_t bytes = 0;
-
-  while (bytes != sbuf.size) {
-    int ret = send(socket, sbuf.data + bytes, sbuf.size - bytes, 0);
-    if (ret < 0) {
-      printf("ret is %d\n", ret);
-      fprintf(stderr, "failed to send message on socket\n");
-      return ret;
-    }
-    bytes += ret;
+  if (arr.items == NULL) {
+    fprintf(stderr, "malloc failed\n");
+    return -1;
   }
+
+  arr.items[0] = x_param;
+  arr.items[1] = y_param;
+  arr.len = 2;
+
+  method_param_t *params = malloc(sizeof(method_param_t) * 2);
+
+  if (params == NULL) {
+    fprintf(stderr, "malloc failed\n");
+    return -1;
+  }
+
+  params[0].type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  params[0].value.i = window_id;
+  params[1].type = MSGPACK_OBJECT_ARRAY;
+  params[1].value.arr = arr;
+
+  send_message(socket, "nvim_win_set_cursor", params, 2);
+
+  free(arr.items);
   return 0;
 }
 
