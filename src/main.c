@@ -63,7 +63,7 @@ int send_message(int socket, char *message) {
   msgpack_pack_str_body(&pk, "nvim_command", 12);
   msgpack_pack_array(&pk, 1);
   msgpack_pack_str(&pk, 18);
-  msgpack_pack_str_body(&pk, "echo \"Hello world\"", 18);
+  msgpack_pack_str_body(&pk, "echo \"Hello worlw\"", 18);
 
   printf("About to send %zu bytes\n", sbuf.size);
 
