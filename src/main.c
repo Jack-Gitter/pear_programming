@@ -11,6 +11,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#define DEFAULT_MES_LEN 100
+
 static int msgid = 0;
 
 typedef struct message {
@@ -48,16 +50,17 @@ int init_socket(char *filename) {
 int read_response(int socket) {
   msgpack_unpacker unp;
   // recv 100 bytes each time, as a base amount
-  bool result = msgpack_unpacker_init(&unp, 100);
+  bool result = msgpack_unpacker_init(&unp, DEFAULT_MES_LEN);
   if (result) {
     // msgpack_unpack_return ret = MSGPACK_UNPACK_CONTINUE;
     // while (ret == MSGPACK_UNPACK_CONTINUE) {
-    if (msgpack_unpacker_buffer_capacity(&unp) < 100) {
-      bool result = msgpack_unpacker_reserve_buffer(&unp, 100);
+    if (msgpack_unpacker_buffer_capacity(&unp) < DEFAULT_MES_LEN) {
+      bool result = msgpack_unpacker_reserve_buffer(&unp, DEFAULT_MES_LEN);
       if (!result) {
         /* Memory allocation error. */
       }
-      int bytes_read = recv(socket, msgpack_unpacker_buffer(&unp), 100, 0);
+      int bytes_read =
+          recv(socket, msgpack_unpacker_buffer(&unp), DEFAULT_MES_LEN, 0);
       msgpack_unpacker_buffer_consumed(&unp, bytes_read);
       if (bytes_read == 0) {
         // client closed connection
