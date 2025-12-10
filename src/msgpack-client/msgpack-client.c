@@ -1,5 +1,17 @@
 #include "constants.h"
+#include "msgpack/object.h"
+#include "msgpack/pack.h"
+#include "msgpack/sbuffer.h"
+#include "msgpack/unpack.h"
+#include <errno.h>
 #include <msgpack.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 static int msgid = 0;
 
@@ -52,7 +64,7 @@ msgpack_object *read_response(int socket) {
 
 int set_cursor(int socket, int window_id, int x, int y) {
   msgpack_sbuffer sbuf;
-  msgpack_unpacker pk;
+  msgpack_packer pk;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
 
