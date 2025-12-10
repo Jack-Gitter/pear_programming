@@ -25,6 +25,3 @@ int exchange_with_nvim_set_cursor(int socket, int window_id, int x, int y);
 
 int send_message(int socket, char *method_name, method_param_t *params,
                  int params_len);
-
-// exchange takes in a fucntion pointer and its params, calls it,
-// then receives the message?
