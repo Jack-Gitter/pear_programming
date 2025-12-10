@@ -58,11 +58,13 @@ int set_cursor(int socket, int window_id, int x, int y) {
   msgpack_packer pk;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
-  // Pack space for outer array
+
+  // Pack [type, msgid, method, params]
   msgpack_pack_array(&pk, 4);
+
   // Pack type = 0 = request
   msgpack_pack_int(&pk, 0);
-  // Pack msgid = static var++
+  // Pack msgid
   msgpack_pack_int(&pk, msgid++);
 
   // Pack method = method*
@@ -71,13 +73,13 @@ int set_cursor(int socket, int window_id, int x, int y) {
   msgpack_pack_str(&pk, len);
   msgpack_pack_str_body(&pk, method, len);
 
-  // Pack space for the params array
+  // Pack params array
   msgpack_pack_array(&pk, 2);
 
   // Pack window ID
   msgpack_pack_int(&pk, window_id);
 
-  // Pack space for [x,y] position tuple
+  // Pack [x,y] position tuple
   msgpack_pack_array(&pk, 2);
   msgpack_pack_int(&pk, x);
   msgpack_pack_int(&pk, y);
