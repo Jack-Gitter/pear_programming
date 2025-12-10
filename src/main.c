@@ -1,5 +1,6 @@
 #include "msgpack/pack.h"
 #include "msgpack/sbuffer.h"
+#include "msgpack/unpack.h"
 #include <errno.h>
 #include <msgpack.h>
 #include <stddef.h>
@@ -42,6 +43,54 @@ int init_socket(char *filename) {
   }
 
   return sock;
+}
+
+int read_response(int socket) {
+  msgpack_unpacker unp;
+  // recv 100 bytes each time, as a base amount
+  bool result = msgpack_unpacker_init(&unp, 100);
+  if (result) {
+    // msgpack_unpack_return ret = MSGPACK_UNPACK_CONTINUE;
+    // while (ret == MSGPACK_UNPACK_CONTINUE) {
+    if (msgpack_unpacker_buffer_capacity(&unp) < 100) {
+      bool result = msgpack_unpacker_reserve_buffer(&unp, 100);
+      if (!result) {
+        /* Memory allocation error. */
+      }
+      int bytes_read = recv(socket, msgpack_unpacker_buffer(&unp), 100, 0);
+      msgpack_unpacker_buffer_consumed(&unp, bytes_read);
+      if (bytes_read == 0) {
+        // client closed connection
+      }
+      msgpack_unpacked und;
+      msgpack_unpack_return ret;
+      msgpack_unpacked_init(&und);
+      ret = msgpack_unpacker_next(&unp, &und);
+      switch (ret) {
+      case MSGPACK_UNPACK_SUCCESS: {
+        // msgpack_object obj = und.data;
+        printf("was able to unpack data!\n");
+        printf("%s\n", und.data.via.str.ptr);
+        msgpack_unpacked_destroy(&und);
+      } break;
+      case MSGPACK_UNPACK_CONTINUE:
+        printf("need more data\n");
+        /* cheking capacity, reserve buffer, copy additional data to the
+         * buffer,
+         */
+        /* notify consumed buffer size, then call msgpack_unpacker_next(&unp,
+         * &und) again */
+        break;
+      case MSGPACK_UNPACK_PARSE_ERROR:
+        printf("parsing error\n");
+        /* Error process */
+        break;
+      }
+    }
+    // }
+  }
+  msgpack_unpacker_destroy(&unp);
+  return 0;
 }
 
 int cleanup_socket(int socket) {
@@ -129,6 +178,8 @@ int main(int argc, char *argv[]) {
     cleanup_socket(socket);
     exit(EXIT_FAILURE);
   }
+
+  read_response(socket);
 
   ret = cleanup_socket(socket);
 
