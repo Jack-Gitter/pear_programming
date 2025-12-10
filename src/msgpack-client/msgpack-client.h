@@ -2,3 +2,4 @@
 
 msgpack_object *read_response(int socket);
 int set_cursor(int socket, int window_id, int x, int y);
+int exchange_with_nvim_set_cursor(int socket, int window_id, int x, int y);

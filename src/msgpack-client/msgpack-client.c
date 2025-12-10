@@ -106,3 +106,26 @@ int set_cursor(int socket, int window_id, int x, int y) {
   }
   return 0;
 }
+
+int exchange_with_nvim_set_cursor(int socket, int window_id, int x, int y) {
+  int resp = set_cursor(socket, window_id, x, y);
+  if (resp < 0) {
+    fprintf(stderr, "failed to set cursor\n");
+    return resp;
+  }
+  msgpack_object *obj = read_response(socket);
+  if (obj == NULL) {
+    fprintf(stderr, "failed to read response\n");
+    return -1;
+  }
+
+  msgpack_object_type type = obj->via.array.ptr[2].type;
+  if (type != MSGPACK_OBJECT_NIL) {
+    fprintf(stderr, "Error returned from server for RPC call\n");
+    free(obj);
+    return -1;
+  }
+
+  free(obj);
+  return 0;
+}
