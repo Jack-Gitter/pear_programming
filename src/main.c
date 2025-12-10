@@ -1,6 +1,5 @@
 #include "constants.h"
 #include "msgpack-client.h"
-#include "msgpack/object.h"
 #include "socket.h"
 #include "utils.h"
 #include <errno.h>
@@ -35,12 +34,9 @@ int main(int argc, char *argv[]) {
   ret = exchange_with_nvim_set_cursor(socket, 1000, 1, 1);
 
   if (ret < 0) {
+    cleanup_socket(socket);
     exit(EXIT_FAILURE);
   }
 
   ret = cleanup_socket(socket);
-
-  if (ret != 0) {
-    exit(EXIT_FAILURE);
-  }
 }
