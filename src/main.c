@@ -162,7 +162,7 @@ char *parse_file_path(int argc, char *argv[]) {
   return argv[1];
 }
 
-int exchange_set_cursor(int socket, int window_id, int x, int y) {
+int exchange_with_nvim_set_cursor(int socket, int window_id, int x, int y) {
   int resp = set_cursor(socket, window_id, x, y);
   if (resp < 0) {
     fprintf(stderr, "failed to set cursor\n");
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  ret = exchange_set_cursor(socket, 1000, 1, 1);
+  ret = exchange_with_nvim_set_cursor(socket, 1000, 1, 1);
 
   if (ret < 0) {
     exit(EXIT_FAILURE);
