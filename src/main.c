@@ -26,8 +26,6 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  ret = set_cursor(socket, 1000, 1, 1);
-
   if (ret < 0) {
     cleanup_socket(socket);
     exit(EXIT_FAILURE);
