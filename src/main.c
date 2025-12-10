@@ -1,3 +1,4 @@
+#include "msgpack/pack.h"
 #include "msgpack/sbuffer.h"
 #include <errno.h>
 #include <msgpack.h>
@@ -8,6 +9,8 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+
+static int msgid = 0;
 
 typedef struct message {
   int type;
@@ -49,23 +52,34 @@ int cleanup_socket(int socket) {
   return ret;
 }
 
-int send_message(int socket, char *message) {
-
+// [type, msgid, method, params]
+int set_cursor(int socket, int window_id, int x, int y) {
   msgpack_sbuffer sbuf;
   msgpack_packer pk;
   msgpack_sbuffer_init(&sbuf);
   msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
-
+  // Pack space for outer array
   msgpack_pack_array(&pk, 4);
+  // Pack type = 0 = request
   msgpack_pack_int(&pk, 0);
-  msgpack_pack_int(&pk, 1);
-  msgpack_pack_str(&pk, 12);
-  msgpack_pack_str_body(&pk, "nvim_command", 12);
-  msgpack_pack_array(&pk, 1);
-  msgpack_pack_str(&pk, 18);
-  msgpack_pack_str_body(&pk, "echo \"Hello worlw\"", 18);
+  // Pack msgid = static var++
+  msgpack_pack_int(&pk, msgid++);
 
-  printf("About to send %zu bytes\n", sbuf.size);
+  // Pack method = method*
+  char *method = "nvim_win_set_cursor";
+  int len = strlen(method);
+  msgpack_pack_str(&pk, len);
+  msgpack_pack_str_body(&pk, method, len);
+
+  // Pack window ID
+  msgpack_pack_int(&pk, window_id);
+
+  // Pack space for [x,y] position tuple
+  msgpack_pack_array(&pk, 2);
+  // Pack x
+  msgpack_pack_int(&pk, x);
+  // Pack y
+  msgpack_pack_int(&pk, y);
 
   size_t bytes = 0;
 
@@ -78,7 +92,7 @@ int send_message(int socket, char *message) {
     }
     bytes += ret;
   }
-  return 1;
+  return 0;
 }
 
 char *parse_file_path(int argc, char *argv[]) {
@@ -108,7 +122,7 @@ int main(int argc, char *argv[]) {
   }
 
   char *mes = ":nvim_command echo 'hello world'";
-  ret = send_message(socket, mes);
+  ret = set_cursor(socket, 1000, 10, 10);
 
   if (ret < 0) {
     cleanup_socket(socket);
