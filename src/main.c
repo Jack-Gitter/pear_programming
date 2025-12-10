@@ -52,7 +52,6 @@ int cleanup_socket(int socket) {
   return ret;
 }
 
-// [type, msgid, method, params]
 int set_cursor(int socket, int window_id, int x, int y) {
   msgpack_sbuffer sbuf;
   msgpack_packer pk;
