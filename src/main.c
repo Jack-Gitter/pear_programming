@@ -59,14 +59,14 @@ msgpack_object *read_response(int socket) {
       if (msgpack_unpacker_buffer_capacity(&unp) < DEFAULT_MES_LEN) {
         bool result = msgpack_unpacker_reserve_buffer(&unp, DEFAULT_MES_LEN);
         if (!result) {
-          sprintf(stderr, "failed to allocate memory for unpacker\n");
+          fprintf(stderr, "failed to allocate memory for unpacker\n");
           return NULL;
         }
         int bytes_read =
             recv(socket, msgpack_unpacker_buffer(&unp), DEFAULT_MES_LEN, 0);
         msgpack_unpacker_buffer_consumed(&unp, bytes_read);
         if (bytes_read == 0) {
-          sprintf(stdout, "client closed connection gracefully\n");
+          fprintf(stdout, "client closed connection gracefully\n");
           return NULL;
         }
         msgpack_unpacked und;
@@ -162,6 +162,22 @@ char *parse_file_path(int argc, char *argv[]) {
   return argv[1];
 }
 
+int exchange_set_cursor(int socket, int window_id, int x, int y) {
+  int resp = set_cursor(socket, window_id, x, y);
+  if (resp < 0) {
+    fprintf(stderr, "failed to set cursor\n");
+    return resp;
+  }
+  msgpack_object *obj = read_response(socket);
+  if (obj == NULL) {
+    fprintf(stderr, "failed to read response\n");
+    return -1;
+  }
+  printf("got %llu\n", obj->via.array.ptr[0].via.i64);
+  free(obj);
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
 
   int ret = 0;
@@ -185,9 +201,9 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  msgpack_object *resp = read_response(socket);
+  ret = exchange_set_cursor(socket, 1000, 1, 1);
 
-  if (resp == NULL) {
+  if (ret < 0) {
     exit(EXIT_FAILURE);
   }
 
