@@ -1,3 +1,4 @@
+#include "msgpack/object.h"
 #include "msgpack/pack.h"
 #include "msgpack/sbuffer.h"
 #include "msgpack/unpack.h"
@@ -58,15 +59,15 @@ msgpack_object *read_response(int socket) {
       if (msgpack_unpacker_buffer_capacity(&unp) < DEFAULT_MES_LEN) {
         bool result = msgpack_unpacker_reserve_buffer(&unp, DEFAULT_MES_LEN);
         if (!result) {
+          sprintf(stderr, "failed to allocate memory for unpacker\n");
           return NULL;
-          /* Memory allocation error. */
         }
         int bytes_read =
             recv(socket, msgpack_unpacker_buffer(&unp), DEFAULT_MES_LEN, 0);
         msgpack_unpacker_buffer_consumed(&unp, bytes_read);
         if (bytes_read == 0) {
+          sprintf(stdout, "client closed connection gracefully\n");
           return NULL;
-          // client closed connection
         }
         msgpack_unpacked und;
         msgpack_unpacked_init(&und);
@@ -184,7 +185,11 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  read_response(socket);
+  msgpack_object *resp = read_response(socket);
+
+  if (resp == NULL) {
+    exit(EXIT_FAILURE);
+  }
 
   ret = cleanup_socket(socket);
 
