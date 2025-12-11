@@ -9,4 +9,5 @@ Todos
     * set up an autocmd with "run lua" and a function string?
     * another way?
 3) If this is possible, make a POC with a "client" side
+4) In order to launch the plugin, I am going to need to make a small portion of lua code which calls the app with the current win ID and stuff
 
