@@ -26,4 +26,5 @@ int exchange_with_nvim_set_cursor(int socket, int window_id, int x, int y);
 int send_message(int socket, char *method_name, method_param_t *params,
                  int params_len);
 
-int set_lines(int socket);
+int set_lines(int socket, int buffer, int start, int end, bool strict_indexing,
+              char **replacement, int len_replacement);

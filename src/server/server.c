@@ -38,7 +38,13 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  ret = set_lines(socket);
+  char **replacements = malloc(sizeof(char *) * 2);
+  char *line_1 = "hello world";
+  char *line_2 = "fuck you";
+  replacements[0] = line_1;
+  replacements[1] = line_2;
+
+  ret = set_lines(socket, 0, 0, 2, false, replacements, 2);
 
   if (ret < 0) {
 
