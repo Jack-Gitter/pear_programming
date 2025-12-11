@@ -145,6 +145,38 @@ int send_message(int socket, char *method_name, method_param_t *params,
   return 0;
 }
 
+int set_lines(int socket) {
+  method_param_t *params = malloc(sizeof(method_param_t) * 5);
+  params[0].type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  params[0].value.i = 0;
+  params[1].type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  params[1].value.i = 5;
+  params[2].type = MSGPACK_OBJECT_POSITIVE_INTEGER;
+  params[2].value.i = 10;
+  params[3].type = MSGPACK_OBJECT_BOOLEAN;
+  params[3].value.b = false;
+  params[4].type = MSGPACK_OBJECT_ARRAY;
+  method_param_arr_t arr = {NULL, 0};
+  params[4].value.arr = arr;
+
+  int res = send_message(socket, "nvim_buf_set_lines", params, 5);
+
+  if (res < 0) {
+    free(params);
+    fprintf(stderr, "failed to send nvim_buf_set_lines message\n");
+    return -1;
+  }
+
+  msgpack_object *obj = read_response(socket);
+  if (obj == NULL) {
+    fprintf(stderr, "failed to read response\n");
+    return -1;
+  }
+
+  free(params);
+  return 0;
+}
+
 int set_cursor(int socket, int window_id, int x, int y) {
   method_param_t x_param;
   x_param.type = MSGPACK_OBJECT_POSITIVE_INTEGER;

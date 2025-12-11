@@ -38,5 +38,13 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  ret = set_lines(socket);
+
+  if (ret < 0) {
+
+    cleanup_socket(socket);
+    exit(EXIT_FAILURE);
+  }
+
   ret = cleanup_socket(socket);
 }
