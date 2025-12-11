@@ -47,7 +47,6 @@ int main(int argc, char *argv[]) {
   ret = set_lines(socket, 0, 0, 2, false, replacements, 2);
 
   if (ret < 0) {
-
     cleanup_socket(socket);
     exit(EXIT_FAILURE);
   }
